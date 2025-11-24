@@ -493,8 +493,77 @@
             border-radius: 12px;
             margin-bottom: 24px;
             box-shadow: 
+                0 0 60px rgba(99, 102, 241, 0.15),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
 
+        .leaderboard h3 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+
+        .leaderboard-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .leaderboard-item {
+            background: rgba(15, 15, 25, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 14px 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            transition: all 0.3s;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .leaderboard-rank {
+            font-weight: 700;
+            font-size: 1.2em;
+            min-width: 45px;
+            color: #6366f1;
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .leaderboard-item:nth-child(1) .leaderboard-rank {
+            color: #fbbf24;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+        }
+
+        .leaderboard-item:nth-child(2) .leaderboard-rank {
+            color: #d1d5db;
+            text-shadow: 0 0 20px rgba(209, 213, 219, 0.6);
+        }
+
+        .leaderboard-item:nth-child(3) .leaderboard-rank {
+            color: #fb923c;
+            text-shadow: 0 0 20px rgba(251, 146, 60, 0.6);
+        }
+
+        .leaderboard-name {
+            font-weight: 500;
+            flex: 1;
+            margin: 0 12px;
+            color: #e5e7eb;
+        }
+
+        .leaderboard-score {
+            font-weight: 600;
+            color: #9ca3af;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -517,9 +586,9 @@
                 <h2 id="weekTitle">Week 12 Picks</h2>
             </div>
 
-            <div class="leaderboard" id="leaderboard" style="display: none;">
-                <h3 style="color: #fff; margin-bottom: 16px; font-weight: 600;">Season Standings</h3>
-                <div id="leaderboardList"></div>
+            <div class="leaderboard" id="leaderboard">
+                <h3>🏆 Season Leaderboard</h3>
+                <div class="leaderboard-list" id="leaderboardList"></div>
             </div>
 
             <div class="table-container">
