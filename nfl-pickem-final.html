@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFL Pick'em Tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e5e7eb;
+            font-weight: 300;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(15, 15, 25, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 
+                0 0 60px rgba(99, 102, 241, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent,
+                rgba(99, 102, 241, 0.6) 30%,
+                rgba(139, 92, 246, 0.6) 70%,
+                transparent
+            );
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2.5em;
+            margin-bottom: 12px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .week-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .week-selector label {
+            font-weight: 500;
+            color: #9ca3af;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .week-selector select {
+            padding: 10px 16px;
+            background: rgba(15, 15, 25, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            font-size: 0.95em;
+            cursor: pointer;
+            color: #e5e7eb;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            transition: all 0.3s;
+        }
+
+        .week-selector select:hover {
+            border-color: rgba(99, 102, 241, 0.6);
+            background: rgba(15, 15, 25, 0.95);
+        }
+
+        .week-selector select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: 1px solid;
+            border-radius: 8px;
+            font-size: 0.9em;
+            cursor: pointer;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.02em;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.4);
+            color: #a5b4fc;
+        }
+
+        .btn-primary:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: #6366f1;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .main-content {
+            background: rgba(15, 15, 25, 0.5);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .standings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .standings-header h2 {
+            color: #fff;
+            font-size: 1.8em;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        th {
+            background: rgba(99, 102, 241, 0.15);
+            color: #c7d2fe;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.75em;
+        }
+
+        th.player-name {
+            min-width: 150px;
+        }
+
+        th.game-col {
+            text-align: center;
+            min-width: 140px;
+        }
+
+        th.tiebreaker-col {
+            text-align: center;
+            min-width: 100px;
+        }
+
+        th.record-col {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.08);
+            background: rgba(15, 15, 25, 0.4);
+        }
+
+        tr:hover td {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .player-name-cell {
+            font-weight: 500;
+            color: #a5b4fc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .player-name-cell:hover {
+            color: #fff;
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .pick-cell {
+            text-align: center;
+            font-family: 'Inter', monospace;
+            font-size: 0.85em;
+            font-weight: 400;
+        }
+
+        .pick-correct {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            font-weight: 500;
+            border-left: 2px solid #10b981;
+            box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.1);
+        }
+
+        .pick-incorrect {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            font-weight: 500;
+            border-left: 2px solid #ef4444;
+            box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.1);
+        }
+
+        .tiebreaker-cell {
+            text-align: center;
+            font-weight: 500;
+            color: #9ca3af;
+        }
+
+        .record-cell {
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        .wins {
+            color: #6ee7b7;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .losses {
+            color: #fca5a5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(15, 15, 25, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            box-shadow: 
+                0 40px 100px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(99, 102, 241, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .modal-header h2 {
+            color: #fff;
+            font-size: 1.8em;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #6b7280;
+            line-height: 1;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        .history-week {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: rgba(99, 102, 241, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-left: 3px solid #6366f1;
+        }
+
+        .history-week h3 {
+            color: #fff;
+            margin-bottom: 16px;
+            font-size: 1.2em;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .history-picks {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .history-pick {
+            padding: 10px 14px;
+            background: rgba(15, 15, 25, 0.6);
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-family: 'Inter', monospace;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            font-weight: 400;
+        }
+
+        .history-summary {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(99, 102, 241, 0.15);
+            flex-wrap: wrap;
+            font-size: 0.9em;
+        }
+
+        .history-summary strong {
+            color: #9ca3af;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+
+        .admin-section {
+            margin-top: 20px;
+            padding: 24px;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 12px;
+            border: 1px dashed rgba(99, 102, 241, 0.3);
+        }
+
+        .admin-section h3 {
+            color: #fff;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .game-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .game-result-input {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .game-result-input label {
+            font-weight: 500;
+            color: #9ca3af;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .game-result-input select {
+            padding: 10px;
+            background: rgba(15, 15, 25, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #e5e7eb;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            transition: all 0.3s;
+        }
+
+        .game-result-input select:hover {
+            border-color: rgba(99, 102, 241, 0.6);
+        }
+
+        .game-result-input select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .leaderboard {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 
+                0 0 60px rgba(99, 102, 241, 0.15),
+
+    <script>
+        // GitHub Configuration - UPDATE THESE WITH YOUR REPO INFO
+        const GITHUB_USER = 'YOUR_USERNAME';  // Replace with your GitHub username
+        const GITHUB_REPO = 'YOUR_REPO_NAME'; // Replace with your repo name
+        const GITHUB_BRANCH = 'main';         // or 'master' depending on your default branch
+        
+        // File paths in your repo
+        const PICKS_FILE = 'picks.csv';       // CSV with all weeks of picks
+        const RESULTS_FILE = 'results.csv';   // CSV with game results
+        const CONFIG_FILE = 'config.json';    // JSON with current week number
+        
+        // Data storage
+        let allWeeksData = {};
+        let gameResults = {};
+        let currentWeek = 'Week 12';
+        
+        // GitHub API base URL
+        function getGitHubRawUrl(filename) {
+            return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${filename}`;
+        }
+
+        // Fetch data from GitHub
+        async function loadFromGitHub() {
+            try {
+                console.log('Loading data from GitHub...');
+                
+                // Load config to get current week
+                const configResponse = await fetch(getGitHubRawUrl(CONFIG_FILE));
+                const config = await configResponse.json();
+                currentWeek = `Week ${config.currentWeek}`;
+                console.log('Current week set to:', currentWeek);
+                
+                // Load picks CSV
+                const picksResponse = await fetch(getGitHubRawUrl(PICKS_FILE));
+                const picksText = await picksResponse.text();
+                allWeeksData = parsePicksCSV(picksText);
+                console.log('Loaded picks for', Object.keys(allWeeksData).length, 'weeks');
+                
+                // Load results CSV
+                const resultsResponse = await fetch(getGitHubRawUrl(RESULTS_FILE));
+                const resultsText = await resultsResponse.text();
+                gameResults = parseResultsCSV(resultsText);
+                console.log('Loaded results for', Object.keys(gameResults).length, 'weeks');
+                
+                return true;
+            } catch (error) {
+                console.error('Error loading from GitHub:', error);
+                alert('Error loading data from GitHub. Please check your repository configuration.');
+                return false;
+            }
+        }
+
+        // Parse picks CSV (all weeks in one file)
+        function parsePicksCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim());
+            const allPicks = {};
+            
+            let currentWeekNum = null;
+            let playerNames = [];
+            let weekPicks = {};
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                const cells = line.split(',').map(c => c.trim());
+                
+                // Check if this is a week header
+                if (cells[0].toLowerCase().startsWith('week')) {
+                    // Save previous week if exists
+                    if (currentWeekNum !== null && Object.keys(weekPicks).length > 0) {
+                        allPicks[`Week ${currentWeekNum}`] = weekPicks;
+                    }
+                    
+                    // Start new week
+                    currentWeekNum = parseInt(cells[0].replace(/[^\d]/g, ''));
+                    weekPicks = {};
+                    playerNames = [];
+                    continue;
+                }
+                
+                // Check if this is a player names row
+                if (playerNames.length === 0 && cells.length > 1) {
+                    playerNames = cells.filter(c => c && c !== '');
+                    playerNames.forEach(name => {
+                        weekPicks[name] = { picks: [], tiebreaker: null };
+                    });
+                    continue;
+                }
+                
+                // Check if this is tiebreaker row
+                if (cells[0] && cells[0].toLowerCase().includes('tiebreaker')) {
+                    playerNames.forEach((name, idx) => {
+                        if (cells[idx] && weekPicks[name]) {
+                            const match = cells[idx].match(/\d+/);
+                            if (match) {
+                                weekPicks[name].tiebreaker = match[0];
+                            }
+                        }
+                    });
+                    continue;
+                }
+                
+                // Regular pick row
+                if (cells[0] && playerNames.length > 0) {
+                    playerNames.forEach((name, idx) => {
+                        if (cells[idx] && weekPicks[name]) {
+                            weekPicks[name].picks.push(cells[idx]);
+                        }
+                    });
+                }
+            }
+            
+            // Save last week
+            if (currentWeekNum !== null && Object.keys(weekPicks).length > 0) {
+                allPicks[`Week ${currentWeekNum}`] = weekPicks;
+            }
+            
+            return allPicks;
+        }
+
+        // Parse results CSV (week by week results)
+        function parseResultsCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim());
+            const allResults = {};
+            
+            if (lines.length < 2) return allResults;
+            
+            // First row should be headers: Week,Game1,Game2,...,Game10
+            const headers = lines[0].split(',').map(h => h.trim());
+            
+            for (let i = 1; i < lines.length; i++) {
+                const cells = lines[i].split(',').map(c => c.trim());
+                const weekNum = cells[0];
+                
+                if (!weekNum) continue;
+                
+                const weekResults = {};
+                for (let j = 1; j < cells.length && j < headers.length; j++) {
+                    if (cells[j]) {
+                        weekResults[`game${j-1}`] = cells[j];
+                    }
+                }
+                
+                allResults[`Week ${weekNum}`] = weekResults;
+            }
+            
+            return allResults;
+        }
+
+        // Team name normalization for consistent matching
+        // Team name normalization for consistent matching
+        const TEAM_NORMALIZATIONS = {
+            'Detriot': 'Detroit',
+            'L.V. Raiders': 'Las Vegas',
+            'Tampa': 'Tampa Bay',
+            'L.A. Chargers:': 'L.A. Chargers',
+            'Dallas+3.5': 'Dallas'
+        };
+
+        function normalizeTeamName(teamStr) {
+            // Extract team from pick format (e.g., "Tampa Bay -2.5" -> "Tampa Bay")
+            let team = teamStr;
+            if (teamStr.includes(' +') || teamStr.includes(' -')) {
+                const parts = teamStr.split(' ');
+                // Remove the last part if it's a spread
+                if (parts[parts.length - 1].match(/^[+-][\d.]+$/)) {
+                    team = parts.slice(0, -1).join(' ');
+                }
+            }
+            team = team.trim();
+            
+            // Apply normalizations
+            if (TEAM_NORMALIZATIONS[team]) {
+                team = TEAM_NORMALIZATIONS[team];
+            }
+            
+            return team;
+        }
+
+        // Data storage
+        let allWeeksData = {};
+        let gameResults = {};
+        let currentWeek = 'Week 12';
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', async () => {
+            const success = await loadFromGitHub();
+            if (success) {
+                populateWeekSelector();
+                displayCurrentWeek();
+            }
+        });
+
+        function initializeData() {
+            // No longer needed - data comes from GitHub
+            // Kept for compatibility
+        }
+
+        function populateWeekSelector() {
+            const select = document.getElementById('weekSelect');
+            select.innerHTML = '<option value="">Select Week</option>';
+            
+            const weeks = Object.keys(allWeeksData).sort((a, b) => {
+                return parseInt(a.replace('Week ', '')) - parseInt(b.replace('Week ', ''));
+            });
+            
+            weeks.forEach(week => {
+                const option = document.createElement('option');
+                option.value = week;
+                option.textContent = week;
+                select.appendChild(option);
+            });
+
+            if (weeks.length > 0) {
+                // Set to Week 12 as current
+                currentWeek = 'Week 12';
+                select.value = currentWeek;
+            }
+
+            select.addEventListener('change', (e) => {
+                currentWeek = e.target.value;
+                displayCurrentWeek();
+            });
+        }
+
+        function displayCurrentWeek() {
+            if (!currentWeek || !allWeeksData[currentWeek]) {
+                return;
+            }
+
+            const weekData = allWeeksData[currentWeek];
+            const results = gameResults[currentWeek] || {};
+            
+            document.getElementById('weekTitle').textContent = `${currentWeek} Picks`;
+            
+            renderTable(weekData, results);
+            renderLeaderboard();
+        }
+
+        function renderTable(weekData, results) {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            
+            const players = Object.keys(weekData);
+            if (players.length === 0) return;
+            
+            const firstPlayer = players[0];
+            const numGames = weekData[firstPlayer].picks.length;
+            
+            // Create header - Changed "Season Record" to "Week Record"
+            let headerHTML = '<tr><th class="player-name">Player</th>';
+            for (let i = 0; i < numGames; i++) {
+                headerHTML += `<th class="game-col">Game ${i + 1}</th>`;
+            }
+            headerHTML += '<th class="tiebreaker-col">Tiebreaker</th>';
+            headerHTML += '<th class="record-col">Week Record</th></tr>';
+            header.innerHTML = headerHTML;
+            
+            // Calculate week records for all players
+            const playerRecords = players.map(player => {
+                const playerData = weekData[player];
+                let weekWins = 0;
+                let weekLosses = 0;
+                
+                // Calculate this week's record only
+                for (let i = 0; i < numGames; i++) {
+                    const pick = playerData.picks[i];
+                    const result = results[`game${i}`];
+                    
+                    if (result && pick) {
+                        if (checkPickCorrect(pick, result)) {
+                            weekWins++;
+                        } else {
+                            weekLosses++;
+                        }
+                    }
+                }
+                
+                // Get season record for tiebreaker
+                const seasonRecord = calculatePlayerRecord(player, currentWeek);
+                
+                return { 
+                    player, 
+                    wins: weekWins, 
+                    losses: weekLosses,
+                    gamesWithResults: weekWins + weekLosses,
+                    seasonWins: seasonRecord.wins,
+                    seasonLosses: seasonRecord.losses
+                };
+            });
+            
+            // Sort by week record, then by season record as tiebreaker
+            playerRecords.sort((a, b) => {
+                // If both have results, sort by wins then losses
+                if (a.gamesWithResults > 0 && b.gamesWithResults > 0) {
+                    // Primary: Most weekly wins
+                    if (b.wins !== a.wins) return b.wins - a.wins;
+                    
+                    // Secondary: Fewest weekly losses
+                    if (a.losses !== b.losses) return a.losses - b.losses;
+                    
+                    // Tertiary (tiebreaker): Best season record - most season wins
+                    if (b.seasonWins !== a.seasonWins) return b.seasonWins - a.seasonWins;
+                    
+                    // Quaternary: Fewest season losses
+                    return a.seasonLosses - b.seasonLosses;
+                }
+                // If only one has results, they go first
+                if (a.gamesWithResults > 0) return -1;
+                if (b.gamesWithResults > 0) return 1;
+                
+                // Both have no results yet, sort by season record
+                if (b.seasonWins !== a.seasonWins) return b.seasonWins - a.seasonWins;
+                return a.seasonLosses - b.seasonLosses;
+            });
+            
+            // Create body with sorted players
+            let bodyHTML = '';
+            playerRecords.forEach(({ player, wins, losses, gamesWithResults }) => {
+                const playerData = weekData[player];
+                bodyHTML += '<tr>';
+                bodyHTML += `<td class="player-name-cell" onclick="showPlayerHistory('${player}')">${player}</td>`;
+                
+                for (let i = 0; i < numGames; i++) {
+                    const pick = playerData.picks[i] || '';
+                    const result = results[`game${i}`];
+                    let cellClass = 'pick-cell';
+                    
+                    if (result && pick) {
+                        const isCorrect = checkPickCorrect(pick, result);
+                        cellClass += isCorrect ? ' pick-correct' : ' pick-incorrect';
+                    }
+                    
+                    bodyHTML += `<td class="${cellClass}">${pick}</td>`;
+                }
+                
+                bodyHTML += `<td class="tiebreaker-cell">${playerData.tiebreaker || ''}</td>`;
+                
+                // Show week record only
+                if (gamesWithResults > 0) {
+                    bodyHTML += `<td class="record-cell"><span class="wins">${wins}W</span> - <span class="losses">${losses}L</span></td>`;
+                } else {
+                    bodyHTML += `<td class="record-cell"><span style="color: #6b7280;">-</span></td>`;
+                }
+                
+                bodyHTML += '</tr>';
+            });
+            
+            body.innerHTML = bodyHTML;
+            
+            console.log('Table rendered with week records, sorted by performance (season record as tiebreaker)');
+        }
+
+        function checkPickCorrect(pick, winner) {
+            const pickTeam = normalizeTeamName(pick);
+            const winnerTeam = normalizeTeamName(winner);
+            return pickTeam === winnerTeam;
+        }
+
+        function calculatePlayerRecord(player, upToWeek) {
+            let wins = 0;
+            let losses = 0;
+            
+            const weeks = Object.keys(allWeeksData).sort((a, b) => {
+                return parseInt(a.replace('Week ', '')) - parseInt(b.replace('Week ', ''));
+            });
+            
+            const upToWeekNum = parseInt(upToWeek.replace('Week ', ''));
+            
+            for (const week of weeks) {
+                const weekNum = parseInt(week.replace('Week ', ''));
+                if (weekNum > upToWeekNum) break;
+                
+                const results = gameResults[week];
+                if (!results || !allWeeksData[week][player]) continue;
+                
+                const playerPicks = allWeeksData[week][player].picks;
+                
+                for (let i = 0; i < playerPicks.length; i++) {
+                    const result = results[`game${i}`];
+                    if (result && playerPicks[i]) {
+                        if (checkPickCorrect(playerPicks[i], result)) {
+                            wins++;
+                        } else {
+                            losses++;
+                        }
+                    }
+                }
+            }
+            
+            return { wins, losses };
+        }
+
+        function calculateWeekRecord(player, week) {
+            let wins = 0;
+            let losses = 0;
+            
+            const results = gameResults[week];
+            if (!results || !allWeeksData[week][player]) return { wins, losses };
+            
+            const playerPicks = allWeeksData[week][player].picks;
+            
+            for (let i = 0; i < playerPicks.length; i++) {
+                const result = results[`game${i}`];
+                if (result && playerPicks[i]) {
+                    if (checkPickCorrect(playerPicks[i], result)) {
+                        wins++;
+                    } else {
+                        losses++;
+                    }
+                }
+            }
+            
+            return { wins, losses };
+        }
+
+        function renderLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            const list = document.getElementById('leaderboardList');
+            
+            console.log('renderLeaderboard called:', {
+                weeksDataLength: Object.keys(allWeeksData).length,
+                currentWeek: currentWeek,
+                hasCurrentWeek: !!allWeeksData[currentWeek]
+            });
+            
+            if (Object.keys(allWeeksData).length === 0) {
+                console.log('No weeks data, hiding leaderboard');
+                leaderboard.style.display = 'none';
+                return;
+            }
+            
+            leaderboard.style.display = 'block';
+            
+            // Get all players and their records
+            const players = Object.keys(allWeeksData[currentWeek] || {});
+            console.log(`Found ${players.length} players`);
+            
+            const standings = players.map(player => {
+                const record = calculatePlayerRecord(player, currentWeek);
+                return {
+                    name: player,
+                    wins: record.wins,
+                    losses: record.losses,
+                    winPct: record.wins / (record.wins + record.losses) || 0
+                };
+            }).sort((a, b) => {
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                return a.losses - b.losses;
+            });
+            
+            console.log('Top 3 standings:', standings.slice(0, 3));
+            
+            let listHTML = '';
+            standings.forEach((player, index) => {
+                const winPct = (player.winPct * 100).toFixed(1);
+                listHTML += `
+                    <div class="leaderboard-item">
+                        <span class="leaderboard-rank">#${index + 1}</span>
+                        <span class="leaderboard-name">${player.name}</span>
+                        <span class="leaderboard-score">${player.wins}-${player.losses} (${winPct}%)</span>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML = listHTML;
+            console.log('Leaderboard rendered with', standings.length, 'players');
+        }
+
+        function showPlayerHistory(playerName) {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyContent');
+            const title = document.getElementById('historyPlayerName');
+            
+            title.textContent = `${playerName}'s History`;
+            
+            const weeks = Object.keys(allWeeksData).sort((a, b) => {
+                return parseInt(b.replace('Week ', '')) - parseInt(a.replace('Week ', ''));
+            });
+            
+            let historyHTML = '';
+            
+            weeks.forEach(week => {
+                if (allWeeksData[week][playerName]) {
+                    const playerData = allWeeksData[week][playerName];
+                    const results = gameResults[week] || {};
+                    const seasonRecord = calculatePlayerRecord(playerName, week);
+                    const weekRecord = calculateWeekRecord(playerName, week);
+                    
+                    historyHTML += `<div class="history-week">`;
+                    historyHTML += `<h3>${week}</h3>`;
+                    historyHTML += `<div class="history-picks">`;
+                    
+                    playerData.picks.forEach((pick, i) => {
+                        const result = results[`game${i}`];
+                        let className = 'history-pick';
+                        if (result && pick) {
+                            className += checkPickCorrect(pick, result) ? ' pick-correct' : ' pick-incorrect';
+                        }
+                        historyHTML += `<div class="${className}">Game ${i + 1}: ${pick}</div>`;
+                    });
+                    
+                    historyHTML += `</div>`;
+                    historyHTML += `<div class="history-summary">`;
+                    historyHTML += `<strong>Tiebreaker:</strong> ${playerData.tiebreaker}`;
+                    historyHTML += `<strong>${week} Record:</strong> <span class="wins">${weekRecord.wins}W</span> - <span class="losses">${weekRecord.losses}L</span>`;
+                    historyHTML += `<strong>Season Record:</strong> <span class="wins">${seasonRecord.wins}W</span> - <span class="losses">${seasonRecord.losses}L</span>`;
+                    historyHTML += `</div>`;
+                    historyHTML += `</div>`;
+                }
+            });
+            
+            content.innerHTML = historyHTML || '<p>No history available for this player.</p>';
+            modal.classList.add('active');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        // Close modal on background click
+        document.getElementById('historyModal').addEventListener('click', function(e) {
+            if (e.target === this) closeHistoryModal();
+        });
+        });
+    </script>
+</body>
+</html>
