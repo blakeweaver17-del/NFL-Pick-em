@@ -762,70 +762,62 @@
             }
         }
 
-        // Parse picks CSV (all weeks in one file)
+        // Parse picks CSV (format: Week,Game,Player1,Player2,...)
         function parsePicksCSV(csvText) {
             const lines = csvText.split('\n').filter(line => line.trim());
             const allPicks = {};
             
-            let currentWeekNum = null;
-            let playerNames = [];
-            let weekPicks = {};
+            if (lines.length < 2) return allPicks;
             
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                const cells = line.split(',').map(c => c.trim());
+            // First row is headers: Week,Game,Player1,Player2,...
+            const headers = lines[0].split(',').map(h => h.trim());
+            const playerNames = headers.slice(2); // Skip "Week" and "Game" columns
+            
+            console.log('Found players:', playerNames);
+            
+            // Process each row
+            for (let i = 1; i < lines.length; i++) {
+                const cells = lines[i].split(',').map(c => c.trim());
+                const weekCell = cells[0];
+                const gameCell = cells[1];
                 
-                // Check if this is a week header
-                if (cells[0].toLowerCase().startsWith('week')) {
-                    // Save previous week if exists
-                    if (currentWeekNum !== null && Object.keys(weekPicks).length > 0) {
-                        allPicks[`Week ${currentWeekNum}`] = weekPicks;
-                    }
-                    
-                    // Start new week
-                    currentWeekNum = parseInt(cells[0].replace(/[^\d]/g, ''));
-                    weekPicks = {};
-                    playerNames = [];
-                    continue;
-                }
+                if (!weekCell) continue;
                 
-                // Check if this is a player names row
-                if (playerNames.length === 0 && cells.length > 1) {
-                    playerNames = cells.filter(c => c && c !== '');
+                // Extract week number
+                const weekNum = parseInt(weekCell.replace(/[^\d]/g, ''));
+                const weekKey = `Week ${weekNum}`;
+                
+                // Initialize week if needed
+                if (!allPicks[weekKey]) {
+                    allPicks[weekKey] = {};
                     playerNames.forEach(name => {
-                        weekPicks[name] = { picks: [], tiebreaker: null };
+                        allPicks[weekKey][name] = { picks: [], tiebreaker: null };
                     });
-                    continue;
                 }
                 
-                // Check if this is tiebreaker row
-                if (cells[0] && cells[0].toLowerCase().includes('tiebreaker')) {
+                // Check if this is a tiebreaker row
+                if (gameCell && gameCell.toLowerCase().includes('tiebreaker')) {
                     playerNames.forEach((name, idx) => {
-                        if (cells[idx] && weekPicks[name]) {
-                            const match = cells[idx].match(/\d+/);
+                        const pickValue = cells[idx + 2]; // +2 to skip Week and Game columns
+                        if (pickValue && allPicks[weekKey][name]) {
+                            const match = pickValue.match(/\d+/);
                             if (match) {
-                                weekPicks[name].tiebreaker = match[0];
+                                allPicks[weekKey][name].tiebreaker = match[0];
                             }
                         }
                     });
-                    continue;
-                }
-                
-                // Regular pick row
-                if (cells[0] && playerNames.length > 0) {
+                } else {
+                    // Regular game pick row
                     playerNames.forEach((name, idx) => {
-                        if (cells[idx] && weekPicks[name]) {
-                            weekPicks[name].picks.push(cells[idx]);
+                        const pickValue = cells[idx + 2]; // +2 to skip Week and Game columns
+                        if (pickValue && allPicks[weekKey][name]) {
+                            allPicks[weekKey][name].picks.push(pickValue);
                         }
                     });
                 }
             }
             
-            // Save last week
-            if (currentWeekNum !== null && Object.keys(weekPicks).length > 0) {
-                allPicks[`Week ${currentWeekNum}`] = weekPicks;
-            }
-            
+            console.log('Parsed weeks:', Object.keys(allPicks));
             return allPicks;
         }
 
