@@ -726,9 +726,20 @@
         let gameResults = {};
         let currentWeek = 'Week 1';
         
-        // GitHub API base URL
-        function getGitHubRawUrl(filename) {
-            return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${filename}`;
+        // Load data from the same GitHub Pages deployment as this page.
+        // The version parameter prevents stale CSV/config files from being reused.
+        function getDataUrl(filename) {
+            const url = new URL(filename, window.location.href);
+            url.searchParams.set('v', Date.now().toString());
+            return url.toString();
+        }
+
+        async function fetchCurrentFile(filename) {
+            const response = await fetch(getDataUrl(filename), { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error(`Unable to load ${filename}: HTTP ${response.status}`);
+            }
+            return response;
         }
 
         // Fetch data from GitHub
@@ -737,19 +748,19 @@
                 console.log('Loading data from GitHub...');
                 
                 // Load config to get current week
-                const configResponse = await fetch(getGitHubRawUrl(CONFIG_FILE));
+                const configResponse = await fetchCurrentFile(CONFIG_FILE);
                 const config = await configResponse.json();
                 currentWeek = `Week ${config.currentWeek}`;
                 console.log('Current week set to:', currentWeek);
                 
                 // Load picks CSV
-                const picksResponse = await fetch(getGitHubRawUrl(PICKS_FILE));
+                const picksResponse = await fetchCurrentFile(PICKS_FILE);
                 const picksText = await picksResponse.text();
                 allWeeksData = parsePicksCSV(picksText);
                 console.log('Loaded picks for', Object.keys(allWeeksData).length, 'weeks');
                 
                 // Load results CSV
-                const resultsResponse = await fetch(getGitHubRawUrl(RESULTS_FILE));
+                const resultsResponse = await fetchCurrentFile(RESULTS_FILE);
                 const resultsText = await resultsResponse.text();
                 gameResults = parseResultsCSV(resultsText);
                 console.log('Loaded results for', Object.keys(gameResults).length, 'weeks');
