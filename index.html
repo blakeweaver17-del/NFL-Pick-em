@@ -764,59 +764,82 @@
 
         // Parse picks CSV (format: Week,Game,Player1,Player2,...)
         function parsePicksCSV(csvText) {
-            const lines = csvText.split('\n').filter(line => line.trim());
+            const lines = csvText
+                .replace(/^\uFEFF/, '')
+                .split(/\r?\n/)
+                .filter(line => line.trim());
             const allPicks = {};
-            
+
             if (lines.length < 2) return allPicks;
-            
-            // First row is headers: Week,Game,Player1,Player2,...
+
             const headers = lines[0].split(',').map(h => h.trim());
-            const playerNames = headers.slice(2); // Skip "Week" and "Game" columns
-            
-            console.log('Found players:', playerNames);
-            
-            // Process each row
-            for (let i = 1; i < lines.length; i++) {
-                const cells = lines[i].split(',').map(c => c.trim());
-                const weekCell = cells[0];
-                const gameCell = cells[1];
-                
-                if (!weekCell) continue;
-                
-                // Extract week number
-                const weekNum = parseInt(weekCell.replace(/[^\d]/g, ''));
-                const weekKey = `Week ${weekNum}`;
-                
-                // Initialize week if needed
-                if (!allPicks[weekKey]) {
-                    allPicks[weekKey] = {};
-                    playerNames.forEach(name => {
-                        allPicks[weekKey][name] = { picks: [], tiebreaker: null };
-                    });
-                }
-                
-                // Check if this is a tiebreaker row
-                if (gameCell && gameCell.toLowerCase().includes('tiebreaker')) {
+            const usesWeekGameColumns =
+                headers[0]?.toLowerCase() === 'week' &&
+                headers[1]?.toLowerCase() === 'game';
+
+            // Legacy format: Week,Game,Player1,Player2,...
+            if (usesWeekGameColumns) {
+                const playerNames = headers.slice(2);
+
+                for (let i = 1; i < lines.length; i++) {
+                    const cells = lines[i].split(',').map(c => c.trim());
+                    const weekNum = parseInt((cells[0] || '').replace(/[^\d]/g, ''), 10);
+                    const gameCell = cells[1] || '';
+
+                    if (!Number.isFinite(weekNum)) continue;
+
+                    const weekKey = `Week ${weekNum}`;
+                    if (!allPicks[weekKey]) {
+                        allPicks[weekKey] = {};
+                        playerNames.forEach(name => {
+                            if (name) allPicks[weekKey][name] = { picks: [], tiebreaker: null };
+                        });
+                    }
+
+                    const isTiebreaker = gameCell.toLowerCase().includes('tiebreaker');
                     playerNames.forEach((name, idx) => {
-                        const pickValue = cells[idx + 2]; // +2 to skip Week and Game columns
-                        if (pickValue && allPicks[weekKey][name]) {
-                            const match = pickValue.match(/\d+/);
-                            if (match) {
-                                allPicks[weekKey][name].tiebreaker = match[0];
-                            }
+                        if (!name || !allPicks[weekKey][name]) return;
+                        const value = cells[idx + 2] || '';
+
+                        if (isTiebreaker) {
+                            const match = value.match(/\d+/);
+                            if (match) allPicks[weekKey][name].tiebreaker = match[0];
+                        } else if (value) {
+                            allPicks[weekKey][name].picks.push(value);
                         }
                     });
-                } else {
-                    // Regular game pick row
+                }
+            } else {
+                // Current format: player names across row 1, followed by one row
+                // per game and a final row containing each player's tiebreaker.
+                const playerNames = headers;
+                const weekKey = currentWeek || 'Week 1';
+                allPicks[weekKey] = {};
+
+                playerNames.forEach(name => {
+                    if (name) allPicks[weekKey][name] = { picks: [], tiebreaker: null };
+                });
+
+                for (let i = 1; i < lines.length; i++) {
+                    const cells = lines[i].split(',').map(c => c.trim());
+                    const isTiebreaker = cells.some(value =>
+                        /^(tiebreaker|total)\s*:/i.test(value)
+                    );
+
                     playerNames.forEach((name, idx) => {
-                        const pickValue = cells[idx + 2]; // +2 to skip Week and Game columns
-                        if (pickValue && allPicks[weekKey][name]) {
-                            allPicks[weekKey][name].picks.push(pickValue);
+                        if (!name || !allPicks[weekKey][name]) return;
+                        const value = cells[idx] || '';
+
+                        if (isTiebreaker) {
+                            const match = value.match(/\d+/);
+                            if (match) allPicks[weekKey][name].tiebreaker = match[0];
+                        } else if (value) {
+                            allPicks[weekKey][name].picks.push(value);
                         }
                     });
                 }
             }
-            
+
             console.log('Parsed weeks:', Object.keys(allPicks));
             return allPicks;
         }
@@ -912,8 +935,8 @@
             });
 
             if (weeks.length > 0) {
-                // Set to Week 1 as current
-                currentWeek = 'Week 1';
+                // Keep the configured week when it exists; otherwise show the first loaded week.
+                if (!allWeeksData[currentWeek]) currentWeek = weeks[0];
                 select.value = currentWeek;
             }
 
