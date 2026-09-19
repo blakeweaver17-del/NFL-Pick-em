@@ -824,16 +824,41 @@
             } else {
                 // Current format: player names across row 1, followed by one row
                 // per game and a final row containing each player's tiebreaker.
+                // Multiple weeks can be stacked in the same file as repeated
+                // blocks (each starting with the same player-name header row);
+                // weeks are numbered sequentially in the order the blocks appear.
                 const playerNames = headers;
-                const weekKey = currentWeek || 'Week 1';
-                allPicks[weekKey] = {};
+                const headerKey = playerNames.join(',');
+                const recordRowPattern = /^Wins\s+\d+\s+Losses\s+\d+$/i;
 
-                playerNames.forEach(name => {
-                    if (name) allPicks[weekKey][name] = { picks: [], tiebreaker: null };
-                });
+                let weekNum = 0;
+                let weekKey = null;
+
+                const startNewWeek = () => {
+                    weekNum++;
+                    weekKey = `Week ${weekNum}`;
+                    allPicks[weekKey] = {};
+                    playerNames.forEach(name => {
+                        if (name) allPicks[weekKey][name] = { picks: [], tiebreaker: null };
+                    });
+                };
+
+                startNewWeek();
 
                 for (let i = 1; i < lines.length; i++) {
                     const cells = lines[i].split(',').map(c => c.trim());
+
+                    // A repeated header row marks the start of the next week's block.
+                    if (cells.join(',') === headerKey) {
+                        startNewWeek();
+                        continue;
+                    }
+
+                    // Skip informational "Wins X Losses Y" rows and fully blank rows.
+                    const nonEmptyCells = cells.filter(c => c);
+                    if (nonEmptyCells.length === 0) continue;
+                    if (nonEmptyCells.every(c => recordRowPattern.test(c))) continue;
+
                     const isTiebreaker = cells.some(value =>
                         /^(tiebreaker|total)\s*:/i.test(value)
                     );
@@ -850,6 +875,12 @@
                         }
                     });
                 }
+
+                // Drop any trailing empty week block (e.g. a stray header row with no picks after it).
+                Object.keys(allPicks).forEach(week => {
+                    const hasAnyPicks = Object.values(allPicks[week]).some(p => p.picks.length > 0);
+                    if (!hasAnyPicks) delete allPicks[week];
+                });
             }
 
             console.log('Parsed weeks:', Object.keys(allPicks));
